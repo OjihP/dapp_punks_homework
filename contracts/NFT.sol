@@ -31,6 +31,8 @@ contract NFT is ERC721Enumerable, Ownable {
     }
 
     function mint(uint256 _mintAmount) public payable {
+        // Limits amount of tokens that can be mintined at a given amount
+        require(_mintAmount <= 5, 'Exceeded minting limit');
         // Only allow minting after specified time
         require(block.timestamp >= allowMintingOn);
         // Must mint at least 1 token
@@ -71,7 +73,7 @@ contract NFT is ERC721Enumerable, Ownable {
         for(uint256 i; i < ownerTokenCount; i++) {
             tokenIds[i] = tokenOfOwnerByIndex(_owner, i);
         }
-        return tokenIds;
+        return (tokenIds);
     }
 
     // Owner functions
@@ -88,5 +90,4 @@ contract NFT is ERC721Enumerable, Ownable {
     function setCost(uint256 _newCost) public onlyOwner {
         cost = _newCost;
     }
-
 }

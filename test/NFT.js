@@ -62,7 +62,6 @@ describe('NFT', () => {
 
   })
 
-
   describe('Minting', () => {
     let transaction, result
 
@@ -83,6 +82,7 @@ describe('NFT', () => {
       })
 
       it('returns total number of tokens the minter owns', async () => {
+        // console.log(await nft.balanceOf(minter.address))
         expect(await nft.balanceOf(minter.address)).to.equal(1)
       })
 
@@ -105,7 +105,6 @@ describe('NFT', () => {
         await expect(transaction).to.emit(nft, 'Mint')
           .withArgs(1, minter.address)
       })
-
     })
 
     describe('Failure', async () => {
@@ -147,11 +146,16 @@ describe('NFT', () => {
         const NFT = await ethers.getContractFactory('NFT')
         nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
         nft.connect(minter).mint(1, { value: COST })
-
         await expect(nft.tokenURI('99')).to.be.reverted
       })
 
+      it('limits NFT minting at a given amount', async () => {
+        const ALLOW_MINTING_ON = Date.now().toString().slice(0, 10) // Now
+        const NFT = await ethers.getContractFactory('NFT')
+        nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
 
+        await expect(nft.connect(minter).mint(6, { value: ether(60) })).to.be.reverted
+      })
     })
 
   })
