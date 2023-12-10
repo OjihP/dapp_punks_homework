@@ -16,12 +16,14 @@ describe('NFT', () => {
 
   let nft,
       deployer,
-      minter
+      minter,
+      notListed
 
   beforeEach(async () => {
     let accounts = await ethers.getSigners()
     deployer = accounts[0]
     minter = accounts[1]
+    notListed = accounts[2]
   })
 
   describe('Deployment', () => {
@@ -59,7 +61,6 @@ describe('NFT', () => {
     it('returns the owner', async () => {
       expect(await nft.owner()).to.equal(deployer.address)
     })
-
   })
 
   describe('Minting', () => {
@@ -72,6 +73,7 @@ describe('NFT', () => {
       beforeEach(async () => {
         const NFT = await ethers.getContractFactory('NFT')
         nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+        await nft.addToWhtList(minter.address)
 
         transaction = await nft.connect(minter).mint(1, { value: COST })
         result = await transaction.wait()
@@ -157,7 +159,6 @@ describe('NFT', () => {
         await expect(nft.connect(minter).mint(6, { value: ether(60) })).to.be.reverted
       })
     })
-
   })
 
   describe('Displaying NFTs', () => {
@@ -168,6 +169,7 @@ describe('NFT', () => {
     beforeEach(async () => {
       const NFT = await ethers.getContractFactory('NFT')
       nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+      await nft.addToWhtList(minter.address)
 
       // Mint 3 nfts
       transaction = await nft.connect(minter).mint(3, { value: ether(30) })
@@ -183,8 +185,6 @@ describe('NFT', () => {
       expect(tokenIds[1].toString()).to.equal('2')
       expect(tokenIds[2].toString()).to.equal('3')
     })
-
-
   })
 
   describe('Minting', () => {
@@ -198,6 +198,7 @@ describe('NFT', () => {
       beforeEach(async () => {
         const NFT = await ethers.getContractFactory('NFT')
         nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+        await nft.addToWhtList(minter.address)
 
         transaction = await nft.connect(minter).mint(1, { value: COST })
         result = await transaction.wait()
@@ -232,7 +233,7 @@ describe('NFT', () => {
         await nft.resumeMinting();
         const isPaused = await nft.mintingPaused();
         expect(isPaused).to.be.false;
-      });
+      })
     })
 
     describe('Failure', async () => {
@@ -267,10 +268,53 @@ describe('NFT', () => {
         const ALLOW_MINTING_ON = Date.now().toString().slice(0, 10) // Now
         const NFT = await ethers.getContractFactory('NFT')
         nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+        await nft.addToWhtList(minter.address)
 
         await nft.connect(minter).mint(1, { value: COST })
         const balance = await nft.balanceOf(minter.address)
         expect(balance).to.equal(1)
+      })
+    })
+  })
+
+  describe('WhiteList', () => {
+
+    describe('Success', async () => {
+      it('should allow the owner to add users to the whitelist', async () => {
+        await nft.addToWhtList(minter.address)
+    
+        const isWhitelisted = await nft.whiteList(minter.address)
+        expect(isWhitelisted).to.be.true
+      })
+
+      it('should allow the owner to remove users from the whitelist', async () => {
+        await nft.addToWhtList(minter.address)
+        await nft.removeFromWhtList(minter.address)
+    
+        const isWhitelisted = await nft.whiteList(minter.address)
+        expect(isWhitelisted).to.be.false
+      })
+
+      it('should allow whitelisted users to mint NFTs', async () => {
+        await nft.addToWhtList(minter.address);
+        await nft.connect(minter).mint(1, { value: COST })
+    
+        const ownerOfNFT = await nft.ownerOf(1)
+        expect(ownerOfNFT).to.equal(minter.address)
+      })
+    })
+
+    describe('Failure', async () => {
+      it('should not allow non-owners to add users to the whitelist', async () => {
+        await expect(nft.connect(notListed).addToWhtList(notListed.address)).to.be.reverted
+      })
+
+      it('should not allow non-owners to remove users from the whitelist', async () => {
+        await expect(nft.connect(notListed).removeFromWhtList(notListed.address)).to.be.reverted
+      })
+
+      it('should not allow non-whitelisted users to mint NFTs', async () => {
+        await expect(nft.connect(notListed).mint(1)).to.be.reverted
       })
     })
   })
