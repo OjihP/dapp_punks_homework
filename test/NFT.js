@@ -220,6 +220,19 @@ describe('NFT', () => {
         expect(transaction).to.emit(nft, 'Withdraw')
           .withArgs(COST, deployer.address)
       })
+
+      it('should allow owner to pause minting', async () => {
+        await nft.pauseMinting()
+        const isPaused = await nft.mintingPaused()
+        expect(isPaused).to.be.true
+      })
+
+      it('should allow the owner to resume minting', async () => {
+        await nft.pauseMinting();
+        await nft.resumeMinting();
+        const isPaused = await nft.mintingPaused();
+        expect(isPaused).to.be.false;
+      });
     })
 
     describe('Failure', async () => {
@@ -231,6 +244,33 @@ describe('NFT', () => {
         nft.connect(minter).mint(1, { value: COST })
 
         await expect(nft.connect(minter).withdraw()).to.be.reverted
+      })
+
+      it('should not allow non-owners to pause minting', async () => {
+        await expect(nft.connect(minter).pauseMinting()).to.be.reverted
+      })
+
+      it('should not allow non-owners to resume minting', async () => {
+        await expect(nft.connect(minter).resumeMinting()).to.be.reverted
+      })
+
+      it('should not allow minting when paused', async () => {
+        const ALLOW_MINTING_ON = Date.now().toString().slice(0, 10) // Now
+        const NFT = await ethers.getContractFactory('NFT')
+        nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+
+        await nft.pauseMinting()
+        await expect(nft.connect(minter).mint(1, { value: COST })).to.be.revertedWith('Minting is paused')
+      })
+    
+      it('should allow minting when not paused', async () => {
+        const ALLOW_MINTING_ON = Date.now().toString().slice(0, 10) // Now
+        const NFT = await ethers.getContractFactory('NFT')
+        nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+
+        await nft.connect(minter).mint(1, { value: COST })
+        const balance = await nft.balanceOf(minter.address)
+        expect(balance).to.equal(1)
       })
     })
   })
