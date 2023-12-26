@@ -61,6 +61,12 @@ describe('NFT', () => {
     it('returns the owner', async () => {
       expect(await nft.owner()).to.equal(deployer.address)
     })
+
+    it('should whitelist the owner in the constructor', async () => {
+      const isOwnerWhitelisted = await nft.whiteList(deployer.address);
+      expect(isOwnerWhitelisted).to.be.true;
+      console.log(deployer.address)
+    })
   })
 
   describe('Minting', () => {

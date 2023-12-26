@@ -104,6 +104,9 @@ function App() {
               </div>
 
               <Data
+                provider={provider}
+                nft={nft}
+                account={account}
                 maxSupply={maxSupply}
                 totalSupply={totalSupply}
                 cost={cost}
@@ -115,6 +118,7 @@ function App() {
                 nft={nft}
                 cost={cost}
                 setIsLoading={setIsLoading}
+                account={account}
               />
             </Col>
 

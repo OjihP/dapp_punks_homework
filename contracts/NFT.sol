@@ -8,7 +8,7 @@ contract NFT is ERC721Enumerable, Ownable {
     using Strings for uint256;
 
     string public baseURI;
-    string public baseExtension = ".json";
+    string public baseExtension = ".png";
     uint256 public cost;
     uint256 public maxSupply;
     uint256 public allowMintingOn;
@@ -32,6 +32,7 @@ contract NFT is ERC721Enumerable, Ownable {
         allowMintingOn = _allowMintingOn;
         baseURI = _baseURI;
         mintingPaused = false;
+        whiteList[owner()] = true;
     }
 
     modifier whenNotPaused() {
@@ -40,7 +41,7 @@ contract NFT is ERC721Enumerable, Ownable {
     }
 
     modifier onlyWhtListed() {
-        require(whiteList[msg.sender], "User is not whitelisted");
+        require(whiteList[msg.sender] = true, "User is not whitelisted");
         _;
     }
 
@@ -70,6 +71,7 @@ contract NFT is ERC721Enumerable, Ownable {
 
     // Return metadata IPFS url
     // EG: 'ipfs://QmQ2jnDYecFhrf3asEWjyjZRX1pZSsNWG3qHzmNDvXa9qg/1.json'
+    // **will return: 'ipfs/QmQPEMsfd1tJnqYPbnTQCjoa8vczfsV1FmqZWgRdNQ7z3g/1.png'
     function tokenURI(uint256 _tokenId)
         public
         view
