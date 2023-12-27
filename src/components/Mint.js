@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Spinner from 'react-bootstrap/Spinner';
+import { ethers } from 'ethers';
 
 const Mint = ({ provider, nft, cost, setIsLoading, account }) => {
   const [isWaiting, setIsWaiting] = useState(false)
   const [isWhitelisted, setIsWhitelisted] = useState(false)
-  const [numberOfNFTs, setNumberOfNFTs] = useState('');
+  const [numberOfNFTs, setNumberOfNFTs] = useState('')
 
   const setWhtList = async (e) => {
     e.preventDefault()
@@ -42,10 +43,13 @@ const Mint = ({ provider, nft, cost, setIsLoading, account }) => {
       if (!isValidInput) {
         throw new Error('Please enter a valid positive integer for the number of NFTs to mint.')
       }
-      // Number(numberOfNFTs)
-      const transaction = await nft.connect(signer).mint(1, { value: cost })
+
+      const value = (cost * numberOfNFTs)
+      
+      const transaction = await nft.connect(signer).mint(numberOfNFTs, { value: value.toString() }) 
       await transaction.wait()
-    } catch {
+    } catch (error) {
+      console.error(error)
       window.alert('User rejected or transaction reverted')
     }
 
@@ -69,8 +73,8 @@ const Mint = ({ provider, nft, cost, setIsLoading, account }) => {
       ) : (
         <Form.Group className="input-group mb-3" style={{ width: '60%', margin: '50px auto' }}>
           <input 
-            type="text" 
-            class="form-control" 
+            type="number" 
+            className="form-control" 
             placeholder="Number of NFTs to mint" 
             aria-label="Number of NFTs to mint" 
             aria-describedby="button-addon2"
